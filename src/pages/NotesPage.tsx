@@ -1,9 +1,26 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { MermaidDiagram } from '../components/MermaidDiagram';
 import { useApp } from '../context/AppContext';
 import { contentApi } from '../services/contentApi';
 import type { NotesResponse, StatusResponse } from '../types/content';
+
+const LANGUAGES = [
+  { code: 'pl', label: 'Polish', flag: '🇵🇱' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+];
+
+const markdownComponents = {
+  code({ className, children }: { className?: string; children?: React.ReactNode }) {
+    const language = /language-(\w+)/.exec(className || '')?.[1];
+    if (language === 'mermaid') {
+      return <MermaidDiagram code={String(children).trim()} />;
+    }
+    return <code className={className}>{children}</code>;
+  },
+};
 
 export const NotesPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +32,12 @@ export const NotesPage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [genStatus, setGenStatus] = useState<StatusResponse | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [selectedLang, setSelectedLang] = useState<string | null>(null);
+  const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [translating, setTranslating] = useState(false);
+  const [translationError, setTranslationError] = useState('');
+  const translationPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const lecture = lectures.find((l) => l.id === id);
 
@@ -41,6 +64,7 @@ export const NotesPage = () => {
     loadNotes();
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
+      if (translationPollRef.current) clearInterval(translationPollRef.current);
     };
   }, [loadNotes]);
 
@@ -75,6 +99,51 @@ export const NotesPage = () => {
     }, 3000);
   };
 
+  const handleSelectLanguage = async (lang: string | null) => {
+    if (lang === null) {
+      setSelectedLang(null);
+      setTranslationError('');
+      return;
+    }
+
+    setSelectedLang(lang);
+    setTranslationError('');
+
+    if (translations[lang]) return;
+
+    if (!id) return;
+
+    try {
+      const data = await contentApi.getNotesTranslation(id, lang);
+      setTranslations((prev) => ({ ...prev, [lang]: data.notes_markdown }));
+      return;
+    } catch (err: any) {
+      if (err.response?.status !== 404) {
+        setTranslationError('Failed to load translation');
+        return;
+      }
+    }
+
+    setTranslating(true);
+    try {
+      await contentApi.translateNotes(id, lang);
+    } catch {
+      setTranslating(false);
+      setTranslationError('Failed to start translation');
+      return;
+    }
+
+    translationPollRef.current = setInterval(async () => {
+      try {
+        const data = await contentApi.getNotesTranslation(id, lang);
+        clearInterval(translationPollRef.current!);
+        translationPollRef.current = null;
+        setTranslating(false);
+        setTranslations((prev) => ({ ...prev, [lang]: data.notes_markdown }));
+      } catch {}
+    }, 3000);
+  };
+
   const getLectureTitle = () => {
     if (!lecture) return 'Notes';
     const parts = [];
@@ -82,6 +151,10 @@ export const NotesPage = () => {
     if (lecture.lecture_number) parts.push(`Lecture ${lecture.lecture_number}`);
     return parts.length > 0 ? parts.join(' - ') : 'Notes';
   };
+
+  const displayedMarkdown = selectedLang
+    ? (translations[selectedLang] ?? '')
+    : (notes?.notes_markdown ?? '');
 
   if (loading) {
     return (
@@ -201,11 +274,64 @@ export const NotesPage = () => {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-gray-500 dark:text-gray-400 mr-1">Translate:</span>
+          <button
+            onClick={() => handleSelectLanguage(null)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              selectedLang === null
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-blue-400'
+            }`}
+          >
+            Original
+          </button>
+          {LANGUAGES.map(({ code, label, flag }) => (
+            <button
+              key={code}
+              onClick={() => handleSelectLanguage(code)}
+              disabled={translating && selectedLang === code}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                selectedLang === code
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-blue-400'
+              } disabled:opacity-60 disabled:cursor-not-allowed`}
+            >
+              <span>{flag}</span>
+              <span>{label}</span>
+              {translations[code] && selectedLang !== code && (
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400" title="Already translated" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {translating && (
+          <div className="mt-3 flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+            Translating… this may take a minute
+          </div>
+        )}
+        {translationError && (
+          <p className="mt-2 text-sm text-red-500">{translationError}</p>
+        )}
+      </div>
+
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-8">
-          <article className="prose prose-lg dark:prose-invert max-w-none">
-            <ReactMarkdown>{notes?.notes_markdown || ''}</ReactMarkdown>
-          </article>
+          {translating && !displayedMarkdown ? (
+            <div className="flex items-center justify-center py-16 text-gray-500 dark:text-gray-400">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3" />
+              Translating notes…
+            </div>
+          ) : (
+            <article className="prose prose-lg dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                {displayedMarkdown}
+              </ReactMarkdown>
+            </article>
+          )}
         </div>
       </main>
     </div>

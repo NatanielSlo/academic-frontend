@@ -55,6 +55,13 @@ export interface NotesResponse {
   generated_at: string;
 }
 
+export interface TranslationResponse {
+  lecture_id: string;
+  language: string;
+  notes_markdown: string;
+  translated_at: string;
+}
+
 export interface CoverageReport {
   lecture_id: string;
   coverage_summary: {

@@ -3,6 +3,7 @@ import type {
   GenerationRequest,
   StatusResponse,
   NotesResponse,
+  TranslationResponse,
   ComprehensiveQuizResponse,
   CoverageReport,
 } from '../types/content';
@@ -79,6 +80,20 @@ export const contentApi = {
   getCoverageReport: async (lectureId: string): Promise<CoverageReport> => {
     const response = await apiClient.get<CoverageReport>(
       `/api/content/lectures/${lectureId}/coverage-report`
+    );
+    return response.data;
+  },
+
+  // Trigger notes translation
+  translateNotes: async (lectureId: string, language: string): Promise<void> => {
+    await apiClient.post(`/api/content/lectures/${lectureId}/notes/translate`, { language });
+  },
+
+  // Fetch a completed translation
+  getNotesTranslation: async (lectureId: string, language: string): Promise<TranslationResponse> => {
+    const response = await apiClient.get<TranslationResponse>(
+      `/api/content/lectures/${lectureId}/notes/translation`,
+      { params: { language } }
     );
     return response.data;
   },
