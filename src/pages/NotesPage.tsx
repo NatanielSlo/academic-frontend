@@ -300,9 +300,6 @@ export const NotesPage = () => {
             >
               <span>{flag}</span>
               <span>{label}</span>
-              {translations[code] && selectedLang !== code && (
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400" title="Already translated" />
-              )}
             </button>
           ))}
         </div>

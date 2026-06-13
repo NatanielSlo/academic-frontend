@@ -44,9 +44,34 @@ export interface QuizMetadata {
 
 export interface ComprehensiveQuizResponse {
   lecture_id: string;
+  quiz_id: string;
   quiz_metadata: QuizMetadata;
   questions: QuizQuestion[];
   generated_at: string;
+}
+
+export interface QuizSummary {
+  id: string;
+  lecture_id: string;
+  created_at: string;
+  questions_count: number;
+  attempts_count: number;
+  best_score?: number;
+}
+
+export interface QuizAttemptRequest {
+  score: number;
+  total: number;
+  answers: Record<number, string>;
+  self_grades?: Record<number, 'correct' | 'partial' | 'incorrect'>;
+}
+
+export interface QuizAttemptResponse {
+  attempt_id: string;
+  quiz_id: string;
+  score: number;
+  total: number;
+  submitted_at: string;
 }
 
 export interface NotesResponse {

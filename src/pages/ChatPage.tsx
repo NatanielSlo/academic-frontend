@@ -1,5 +1,7 @@
 import { useState, FormEvent, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useApp } from '../context/AppContext';
 import api from '../services/api';
 import type { ChatMessage, ChatScope } from '../types';
@@ -63,21 +65,53 @@ export const ChatPage = () => {
     }
   };
 
-  const getLectureById = (id: string) => {
-    return lectures.find((l) => l.id === id);
-  };
+  const getLectureById = (lectureId: string) => lectures.find((l) => l.id === lectureId);
 
   const handleSourceClick = (lectureId: string, startSeconds: number) => {
     const lecture = getLectureById(lectureId);
     if (!lecture?.url) return;
+    const h = Math.floor(startSeconds / 3600);
+    const m = Math.floor((startSeconds % 3600) / 60);
+    const s = Math.floor(startSeconds % 60);
+    const t = h > 0 ? `${h}h${m}m${s}s` : `${m}m${s}s`;
+    window.open(`${lecture.url}?t=${t}`, '_blank');
+  };
 
-    const hours = Math.floor(startSeconds / 3600);
-    const minutes = Math.floor((startSeconds % 3600) / 60);
-    const secs = Math.floor(startSeconds % 60);
-
-    const timeParam = hours > 0 ? `${hours}h${minutes}m${secs}s` : `${minutes}m${secs}s`;
-    const url = `${lecture.url}?t=${timeParam}`;
-    window.open(url, '_blank');
+  const AssistantBubble = ({ message }: { message: ChatMessage }) => {
+    const [showSources, setShowSources] = useState(false);
+    const hasSources = message.sources && message.sources.length > 0;
+    return (
+      <div className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg p-4 max-w-[80%]">
+        <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+        </div>
+        {hasSources && (
+          <div className="mt-3">
+            <button
+              onClick={() => setShowSources((v) => !v)}
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1 transition-colors"
+            >
+              <span>{showSources ? '▾' : '▸'}</span>
+              {showSources ? 'Hide' : 'Show'} {message.sources!.length} source{message.sources!.length !== 1 ? 's' : ''}
+            </button>
+            {showSources && (
+              <ul className="mt-2 space-y-1">
+                {message.sources!.map((source, i) => (
+                  <li key={i}>
+                    <button
+                      onClick={() => handleSourceClick(source.lecture_id, source.start_seconds)}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      • {source.lecture_name} — {source.timestamp}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -199,43 +233,15 @@ export const ChatPage = () => {
               messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div
-                    className={`max-w-[80%] rounded-lg p-4 ${
-                      message.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                    {message.sources && message.sources.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
-                        <p className="text-xs font-semibold mb-2 text-gray-600 dark:text-gray-400">
-                          Sources:
-                        </p>
-                        <ul className="space-y-1">
-                          {message.sources.map((source, index) => (
-                            <li key={index}>
-                              <button
-                                onClick={() =>
-                                  handleSourceClick(
-                                    source.lecture_id,
-                                    source.start_seconds
-                                  )
-                                }
-                                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                              >
-                                • {source.lecture_name} - {source.timestamp}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
+                  {message.role === 'user' ? (
+                    <div className="max-w-[80%] rounded-lg p-4 bg-blue-600 text-white">
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                    </div>
+                  ) : (
+                    <AssistantBubble message={message} />
+                  )}
                 </div>
               ))
             )}

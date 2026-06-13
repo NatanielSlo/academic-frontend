@@ -5,6 +5,9 @@ import type {
   NotesResponse,
   TranslationResponse,
   ComprehensiveQuizResponse,
+  QuizSummary,
+  QuizAttemptRequest,
+  QuizAttemptResponse,
   CoverageReport,
 } from '../types/content';
 
@@ -66,12 +69,40 @@ export const contentApi = {
     return response.data;
   },
 
-  // Get comprehensive quiz
+  // Get the most recent quiz for a lecture
   getComprehensiveQuiz: async (
     lectureId: string
   ): Promise<ComprehensiveQuizResponse> => {
     const response = await apiClient.get<ComprehensiveQuizResponse>(
       `/api/content/lectures/${lectureId}/comprehensive-quiz`
+    );
+    return response.data;
+  },
+
+  // List all quizzes generated for a lecture (for the "Old Quizzes" view)
+  getLectureQuizzes: async (lectureId: string): Promise<QuizSummary[]> => {
+    const response = await apiClient.get<{ quizzes: QuizSummary[] }>(
+      `/api/content/lectures/${lectureId}/quizzes`
+    );
+    return response.data.quizzes;
+  },
+
+  // Fetch a specific quiz by id (to retake it)
+  getQuiz: async (quizId: string): Promise<ComprehensiveQuizResponse> => {
+    const response = await apiClient.get<ComprehensiveQuizResponse>(
+      `/api/content/quizzes/${quizId}`
+    );
+    return response.data;
+  },
+
+  // Submit a quiz attempt (saved to quiz_attempts)
+  submitQuizAttempt: async (
+    quizId: string,
+    attempt: QuizAttemptRequest
+  ): Promise<QuizAttemptResponse> => {
+    const response = await apiClient.post<QuizAttemptResponse>(
+      `/api/content/quizzes/${quizId}/attempts`,
+      attempt
     );
     return response.data;
   },
