@@ -4,7 +4,14 @@ export interface Lecture {
   course_name?: string;
   lecture_number?: string;
   date?: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status:
+    | 'pending'
+    | 'processing'
+    | 'downloading'
+    | 'transcribing'
+    | 'embedding'
+    | 'completed'
+    | 'failed';
   progress?: number;
   current_step?: string;
   error_message?: string;

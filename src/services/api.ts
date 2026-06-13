@@ -37,12 +37,21 @@ export const api = {
     date?: string;
   }): Promise<Lecture> => {
     const response = await apiClient.post('/api/lectures', data);
-    return response.data;
+    // Backend returns { lecture_id, status }; normalize to the `id` field the UI uses.
+    const d = response.data;
+    return { ...d, id: d.id ?? d.lecture_id };
   },
 
   getLectureStatus: async (id: string): Promise<Lecture> => {
     const response = await apiClient.get(`/api/lectures/${id}/status`);
-    return response.data;
+    // Backend returns { lecture_id, status, progress_percent, progress_message, error_message }.
+    const d = response.data;
+    return {
+      ...d,
+      id: d.id ?? d.lecture_id,
+      progress: d.progress ?? d.progress_percent,
+      current_step: d.current_step ?? d.progress_message,
+    };
   },
 
   // Transcript

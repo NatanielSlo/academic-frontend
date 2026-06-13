@@ -50,7 +50,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     date?: string;
   }) => {
     const newLecture = await api.addLecture(data);
-    setLectures((prev) => [newLecture, ...prev]);
+    // The POST response is minimal ({ id, status }). Reload the list so the new
+    // lecture has its full DB record (url, course_name, created_at, ...) and a
+    // real id for status polling.
+    await refreshLectures();
     return newLecture;
   };
 
@@ -60,8 +63,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // Poll for processing lectures
   useEffect(() => {
+    // Poll any lecture that hasn't reached a terminal state. The backend reports
+    // intermediate statuses (downloading, transcribing, embedding) that aren't in
+    // the narrow `processing`/`pending` set, so filter by what's NOT done instead.
     const processingLectures = lectures.filter(
-      (l) => l.status === 'processing' || l.status === 'pending'
+      (l) => l.status !== 'completed' && l.status !== 'failed'
     );
 
     if (processingLectures.length === 0) return;
@@ -75,7 +81,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setLectures((prev) =>
           prev.map((lecture) => {
             const update = updates.find((u) => u.id === lecture.id);
-            return update || lecture;
+            // The status response is partial (id/status/progress/current_step), so
+            // overlay it onto the existing lecture instead of replacing it — otherwise
+            // course_name/date/url would vanish from the card while processing.
+            return update ? { ...lecture, ...update } : lecture;
           })
         );
       } catch (err) {

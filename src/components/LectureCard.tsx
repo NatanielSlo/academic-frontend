@@ -6,28 +6,30 @@ interface LectureCardProps {
 }
 
 export const LectureCard = ({ lecture }: LectureCardProps) => {
+  // Anything that isn't a terminal state is still being processed.
+  const inProgress =
+    lecture.status !== 'completed' && lecture.status !== 'failed';
+
   const getStatusBadge = () => {
-    switch (lecture.status) {
-      case 'completed':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-            ✓ Completed
-          </span>
-        );
-      case 'processing':
-      case 'pending':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-            Processing
-          </span>
-        );
-      case 'failed':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-            ✗ Failed
-          </span>
-        );
+    if (lecture.status === 'completed') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+          ✓ Completed
+        </span>
+      );
     }
+    if (lecture.status === 'failed') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+          ✗ Failed
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 capitalize">
+        {lecture.status}
+      </span>
+    );
   };
 
   const getLectureTitle = () => {
@@ -38,13 +40,15 @@ export const LectureCard = ({ lecture }: LectureCardProps) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
-      <div className="flex items-start justify-between mb-3">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {getLectureTitle()}
-        </h3>
-        {getStatusBadge()}
-      </div>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+      <Link to={`/lectures/${lecture.id}`} className="block mb-3">
+        <div className="flex items-start justify-between">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            {getLectureTitle()}
+          </h3>
+          {getStatusBadge()}
+        </div>
+      </Link>
 
       {lecture.date && (
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
@@ -52,11 +56,11 @@ export const LectureCard = ({ lecture }: LectureCardProps) => {
         </p>
       )}
 
-      {(lecture.status === 'processing' || lecture.status === 'pending') && (
+      {inProgress && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {lecture.current_step || 'Processing...'}
+            <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+              {lecture.current_step || lecture.status || 'Processing...'}
             </span>
             {lecture.progress !== undefined && (
               <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -80,19 +84,35 @@ export const LectureCard = ({ lecture }: LectureCardProps) => {
       )}
 
       {lecture.status === 'completed' && (
-        <div className="flex gap-2">
-          <Link
-            to={`/lectures/${lecture.id}/transcript`}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
-          >
-            View Transcript
-          </Link>
-          <Link
-            to={`/lectures/${lecture.id}/quizzes`}
-            className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md transition-colors"
-          >
-            Quizzes
-          </Link>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Link
+              to={`/lectures/${lecture.id}/transcript`}
+              className="flex-1 px-4 py-2 text-sm font-medium text-center text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+            >
+              Transcript
+            </Link>
+            <Link
+              to={`/lectures/${lecture.id}/notes`}
+              className="flex-1 px-4 py-2 text-sm font-medium text-center text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md transition-colors"
+            >
+              Notes
+            </Link>
+          </div>
+          <div className="flex gap-2">
+            <Link
+              to={`/lectures/${lecture.id}/quizzes`}
+              className="flex-1 px-4 py-2 text-sm font-medium text-center text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors"
+            >
+              Old Quizzes
+            </Link>
+            <Link
+              to={`/lectures/${lecture.id}/comprehensive-quiz`}
+              className="flex-1 px-4 py-2 text-sm font-medium text-center text-green-700 dark:text-green-300 border border-green-600 dark:border-green-400 hover:bg-green-50 dark:hover:bg-gray-700 rounded-md transition-colors"
+            >
+              Study Quiz
+            </Link>
+          </div>
         </div>
       )}
     </div>
