@@ -91,3 +91,18 @@ export interface ChatRequest {
   scope: ChatScope;
   scope_id?: string;
 }
+
+export interface StudyPlanTask {
+  id: string;
+  title: string;
+  description: string;
+  done: boolean;
+  order_index: number;
+}
+
+export interface StudyPlan {
+  id: string;
+  lecture_id: string;
+  tasks: StudyPlanTask[];
+  generated_at: string;
+}

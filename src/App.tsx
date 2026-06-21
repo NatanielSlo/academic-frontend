@@ -9,6 +9,7 @@ import { QuizListPage } from './pages/QuizListPage';
 import { QuizTakingPage } from './pages/QuizTakingPage';
 import { QuizResultsPage } from './pages/QuizResultsPage';
 import { ComprehensiveQuizPage } from './pages/ComprehensiveQuizPage';
+import { StudyPlanPage } from './pages/StudyPlanPage';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             path="/lectures/:id/comprehensive-quiz"
             element={<ComprehensiveQuizPage />}
           />
+          <Route path="/lectures/:id/study-plan" element={<StudyPlanPage />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/quizzes/:id" element={<QuizTakingPage />} />
           <Route

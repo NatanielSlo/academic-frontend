@@ -58,7 +58,7 @@ export const LectureDetailPage = () => {
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               Available Materials
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <Link
                 to={`/lectures/${lecture.id}/transcript`}
                 className="p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
@@ -104,6 +104,18 @@ export const LectureDetailPage = () => {
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Revisit and retake previously generated quizzes
+                </p>
+              </Link>
+
+              <Link
+                to={`/lectures/${lecture.id}/study-plan`}
+                className="p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+              >
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                  📋 Study Plan
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  AI-generated task list to guide your study session
                 </p>
               </Link>
             </div>

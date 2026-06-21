@@ -7,6 +7,7 @@ import type {
   Quiz,
   QuizQuestion,
   QuizAttempt,
+  StudyPlan,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -117,6 +118,21 @@ export const api = {
       `/api/quizzes/${quizId}/attempts/${attemptId}`
     );
     return response.data;
+  },
+
+  // Study Plans
+  generateStudyPlan: async (lectureId: string): Promise<StudyPlan> => {
+    const response = await apiClient.post(`/api/lectures/${lectureId}/study-plan`);
+    return response.data;
+  },
+
+  getStudyPlan: async (lectureId: string): Promise<StudyPlan> => {
+    const response = await apiClient.get(`/api/lectures/${lectureId}/study-plan`);
+    return response.data;
+  },
+
+  updateStudyPlanTask: async (taskId: string, done: boolean): Promise<void> => {
+    await apiClient.patch(`/api/study-tasks/${taskId}`, { done });
   },
 };
 
