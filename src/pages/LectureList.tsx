@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { LectureCard } from '../components/LectureCard';
 import { LectureForm } from '../components/LectureForm';
+import { UrgentTasksFeed } from '../components/UrgentTasksFeed';
 import type { Lecture } from '../types';
 
 const statusColor = (status: Lecture['status']) => {
@@ -159,19 +160,27 @@ export const LectureList = () => {
             </div>
           </div>
         ) : (
-          <div className="p-8 max-w-2xl">
-            <div className="mb-6">
-              <h2 className="font-syne font-bold text-2xl" style={{ color: 'var(--text-primary)' }}>
-                Lectures
-              </h2>
-              <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-                {lectures.length} lecture{lectures.length !== 1 ? 's' : ''} · {grouped.size} course{grouped.size !== 1 ? 's' : ''}
-              </p>
-            </div>
-            <div className="space-y-3">
-              {lectures.map((lecture) => (
-                <LectureCard key={lecture.id} lecture={lecture} />
-              ))}
+          <div className="p-8">
+            <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-8 max-w-5xl">
+              {/* ── Urgent tasks feed ── */}
+              <UrgentTasksFeed />
+
+              {/* ── Lecture list ── */}
+              <div>
+                <div className="mb-5">
+                  <h2 className="font-syne font-bold text-xl" style={{ color: 'var(--text-primary)' }}>
+                    Lectures
+                  </h2>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    {lectures.length} lecture{lectures.length !== 1 ? 's' : ''} · {grouped.size} course{grouped.size !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {lectures.map((lecture) => (
+                    <LectureCard key={lecture.id} lecture={lecture} />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}

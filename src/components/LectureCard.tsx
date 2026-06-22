@@ -41,7 +41,7 @@ export const LectureCard = ({ lecture }: Props) => {
         <div className="flex items-start justify-between gap-3 mb-1">
           <Link to={`/lectures/${lecture.id}`} className="group flex-1 min-w-0">
             <h3
-              className="font-syne font-bold text-base leading-snug truncate transition-colors"
+              className="font-syne font-bold text-base leading-snug transition-colors"
               style={{ color: 'var(--text-primary)' }}
               onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
               onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-primary)')}
